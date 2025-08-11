@@ -4,107 +4,178 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Vješala — hrvatska verzija</title>
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icons/icon-192.png">
-<meta name="theme-color" content="#0f172a">
 <style>
-/* (same CSS as earlier full implementation) */
-body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto; background:#0f172a; color:#e6edf6}
-/* Minimal subset for brevity in this environment; the actual look will still be fine */
-.app{max-width:1100px;margin:auto;padding:16px;display:grid;gap:16px}
-.card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:16px}
-.headline{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.1)}
-.content{padding:14px}
-.word{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
-.slot{width:36px;height:52px;display:grid;place-items:center;border-bottom:3px solid rgba(255,255,255,.35);font-size:28px}
-.slot.space{border:0;width:16px}
-.keyboard{margin-top:14px;display:grid;grid-template-columns:repeat(9,1fr);gap:8px}
-.key{padding:10px 0;text-align:center;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:inherit}
-.key[disabled]{opacity:.5}
-.btn{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:inherit;padding:10px 14px;border-radius:10px}
-.input{flex:1;min-width:200px;border-radius:10px;border:1px solid rgba(255,255,255,.16);padding:11px 12px;background:rgba(255,255,255,.08);color:inherit}
-.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
-.message{margin-top:10px;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06)}
-.modal{position:fixed;inset:0;display:grid;place-items:center;background:rgba(8,12,24,.6)}
-.sheet{width:min(92vw,560px);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:16px}
-.sheet .hd{padding:16px 18px;border-bottom:1px solid rgba(255,255,255,.12);display:flex;justify-content:space-between;align-items:center}
-.sheet .bd{padding:18px;display:grid;gap:12px}
-.sheet .row{display:flex;gap:8px;flex-wrap:wrap}
-.toggle{border:none;background:transparent;color:#7dd3fc}
-.svg-wrap{display:grid;place-items:center;background:rgba(255,255,255,.14);border-radius:12px;padding:12px}
-svg{max-width:500px;width:100%;height:auto}
+  :root{
+    --bg: linear-gradient(135deg,#0f172a 0%, #1e293b 45%, #0b1020 100%);
+    --panel: rgba(255,255,255,.08);
+    --panel-strong: rgba(255,255,255,.14);
+    --text: #e6edf6;
+    --muted: #94a3b8;
+    --good:#16a34a;
+    --bad:#dc2626;
+    --shadow: 0 10px 30px rgba(0,0,0,.35);
+    --radius: 16px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; font-family: ui-rounded, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial;
+    color:var(--text); background:var(--bg);
+    display:grid; place-items:center; padding:24px;
+  }
+  .app{ width:min(100%, 1100px); display:grid; gap:18px; grid-template-columns: 1.1fr 1.4fr; }
+  @media (max-width: 880px){ .app{grid-template-columns: 1fr} }
+  .card{ background:var(--panel); border:1px solid rgba(255,255,255,.12); border-radius:var(--radius); box-shadow:var(--shadow); backdrop-filter: blur(8px); }
+  .headline{ display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:1px solid rgba(255,255,255,.09); background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0)); border-radius: var(--radius) var(--radius) 0 0; }
+  .headline h1{font-size:20px; margin:0; letter-spacing:.2px}
+  .headline small{color:var(--muted)}
+  .content{padding:18px}
+
+  .stage{display:grid; gap:16px}
+  .meters{display:flex; align-items:center; justify-content:space-between; color:var(--muted); font-size:14px}
+  .meters b{color:var(--text)}
+  .svg-wrap{display:grid; place-items:center; background:var(--panel-strong); border-radius:12px; padding:20px}
+  svg{max-width:500px; width:100%; height:auto}
+
+  .word{display:flex; gap:10px; flex-wrap:wrap; justify-content:center; padding:8px 0 0; font-variant-ligatures:none;}
+  .slot{min-width:42px; height:52px; padding:0 6px; display:grid; place-items:center; border-bottom:3px solid rgba(255,255,255,.35); font-size:26px; letter-spacing:.03em; text-transform:uppercase}
+  .slot.space{border-bottom:0; min-width:16px}
+  .slot.revealed{color:#e6f7ef; border-bottom-color:rgba(52,211,153,.65)}
+  .slot.goodflash{background:rgba(52,211,153,.18); transition:background .6s ease}
+  .slot.badflash{background:rgba(248,113,113,.18); transition:background .3s ease}
+
+  .keyboard{margin-top:14px; display:grid; grid-template-columns: repeat(10, minmax(0,1fr)); gap:8px;}
+  .key{
+    padding:12px 0; text-align:center; border-radius:10px; border:1px solid rgba(255,255,255,.15);
+    background:rgba(255,255,255,.06); color:var(--text); cursor:pointer; user-select:none;
+    transition:transform .06s ease, background .2s ease, border-color .2s ease, color .2s ease;
+  }
+  .key:hover{transform:translateY(-1px); background:rgba(255,255,255,.10)}
+  .key:active{transform:translateY(0)}
+  .key[disabled]{cursor:not-allowed; transform:none}
+  .key.good{background:var(--good); border-color:var(--good); color:#fff}
+  .key.bad{background:var(--bad); border-color:var(--bad); color:#fff}
+
+  .actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; align-items:center}
+  .btn{
+    border:1px solid rgba(255,255,255,.18);
+    background: radial-gradient(120% 120% at 30% 20%, rgba(125,211,252,.35), rgba(167,139,250,.2) 60%, rgba(255,255,255,.06));
+    color:var(--text); padding:10px 14px; border-radius:10px; cursor:pointer;
+    backdrop-filter: blur(6px); box-shadow:var(--shadow);
+    transition: filter .2s ease, transform .06s ease;
+  }
+  .btn:hover{filter:brightness(1.06)}
+  .btn:active{transform:translateY(1px)}
+  .btn.secondary{background:rgba(255,255,255,.06)}
+  .input{ flex:1; min-width:200px; border-radius:10px; border:1px solid rgba(255,255,255,.16); padding:11px 12px; background:rgba(255,255,255,.08); color:var(--text); }
+
+  .message{margin-top:10px; padding:10px 12px; border-radius:10px; border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.06); color:var(--text)}
+  .message.good{border-color:rgba(52,211,153,.55); background:rgba(52,211,153,.18)}
+  .message.bad{border-color:rgba(248,113,113,.55); background:rgba(248,113,113,.18)}
+  .note{color:var(--muted); font-size:13px}
+
+  .modal{position:fixed; inset:0; display:grid; place-items:center; background:rgba(8,12,24,.6); backdrop-filter: blur(2px); z-index: 10;}
+  .modal .sheet{width:min(92vw, 560px); background:var(--panel); border:1px solid rgba(255,255,255,.18); border-radius:16px; box-shadow:var(--shadow);}
+  .sheet .hd{padding:16px 18px; border-bottom:1px solid rgba(255,255,255,.12); display:flex; justify-content:space-between; align-items:center}
+  .sheet .bd{padding:18px; display:grid; gap:12px}
+  .sheet .row{display:flex; gap:8px; flex-wrap:wrap}
+  .sheet .row .input{min-width:0; flex:1}
+  .sheet .hint{font-size:13px; color:var(--muted)}
+  .toggle{border:none; background:transparent; color:#7dd3fc; cursor:pointer; font-size:13px; padding:6px 8px}
+  .footer{display:flex; gap:12px; align-items:center; justify-content:flex-end; padding:0 18px 16px}
+  .footer small{color:var(--muted)}
 </style>
 </head>
 <body>
-<div class="modal" id="setupModal" aria-modal="true" role="dialog">
-  <div class="sheet">
-    <div class="hd">
-      <h2 style="margin:0;font-size:18px">Postavi tajnu riječ</h2>
-      <small class="hint">Igrač 1 unosi riječ, Igrač 2 pogađa</small>
-    </div>
-    <div class="bd">
-      <div class="row">
-        <input id="secretInput" class="input" type="password" autocomplete="off" placeholder="npr. ELEKTROMOTOR, ČEKIĆ, ŽIR" />
-        <button id="toggleShow" class="toggle" type="button" aria-pressed="false">Pokaži</button>
+  <!-- SETUP MODAL -->
+  <div class="modal" id="setupModal" aria-modal="true" role="dialog">
+    <div class="sheet">
+      <div class="hd">
+        <h2 style="margin:0;font-size:18px">Postavi tajnu riječ</h2>
+        <small class="hint">Igrač 1 unosi riječ, Igrač 2 pogađa</small>
       </div>
-      <div class="row">
-        <button id="startGame" class="btn">Započni igru</button>
-        <button id="demoWord" class="btn" type="button">Nasumična riječ</button>
+      <div class="bd">
+        <div class="row">
+          <input id="secretInput" class="input" type="password" autocomplete="off" placeholder="npr. NJIVA, DŽEPNI NOŽ, BILJKA" />
+          <button id="toggleShow" class="toggle" type="button" aria-pressed="false">Pokaži</button>
+        </div>
+        <div class="row">
+          <button id="startGame" class="btn">Započni igru</button>
+          <button id="demoWord" class="btn secondary" type="button">Nasumična riječ</button>
+        </div>
+        <div class="hint">Savjet: koristi hrvatska slova (Č Ć Đ Š Ž) i dvoslove (NJ, LJ, DŽ). Razmaci su dopušteni.</div>
       </div>
-      <div class="hint" style="opacity:.8;font-size:13px">Savjet: koristi hrvatska slova (Č Ć Đ Š Ž). Razmaci su dopušteni.</div>
+      <div class="footer">
+        <small>Vješala • jednostavna web-app</small>
+      </div>
     </div>
-    <div style="display:flex;justify-content:flex-end;padding:0 18px 16px;opacity:.8"><small>Vješala • web-app</small></div>
   </div>
-</div>
 
-<div class="app">
-  <section class="card">
-    <div class="headline"><h1 style="margin:0">Vješala</h1><small>Pokušaji: <b id="triesLeft">10</b></small></div>
-    <div class="content">
-      <div style="display:flex;justify-content:space-between;opacity:.9;font-size:14px"><div>Neispravna slova: <b id="badCount">0</b></div><div>Preostalo dijelova: <b id="partsLeft">10</b></div></div>
-      <div class="svg-wrap">
-        <svg viewBox="0 0 400 400" aria-label="Vješala">
-          <line x1="40" y1="360" x2="200" y2="360" stroke="#8b9db2" stroke-width="8"/>
-          <line x1="80" y1="360" x2="80" y2="40" stroke="#8b9db2" stroke-width="8"/>
-          <line x1="80" y1="40" x2="240" y2="40" stroke="#8b9db2" stroke-width="8"/>
-          <line x1="240" y1="40" x2="240" y2="90" stroke="#8b9db2" stroke-width="6"/>
-          <circle class="part" data-step="1" cx="240" cy="120" r="28" fill="none" stroke="#e2e8f0" stroke-width="6" opacity="0"/>
-          <line class="part" data-step="2" x1="240" y1="148" x2="240" y2="220" stroke="#e2e8f0" stroke-width="6" opacity="0"/>
-          <line class="part" data-step="3" x1="240" y1="168" x2="210" y2="200" stroke="#e2e8f0" stroke-width="6" opacity="0"/>
-          <line class="part" data-step="4" x1="240" y1="168" x2="270" y2="200" stroke="#e2e8f0" stroke-width="6" opacity="0"/>
-          <line class="part" data-step="5" x1="240" y1="220" x2="215" y2="265" stroke="#e2e8f0" stroke-width="6" opacity="0"/>
-          <line class="part" data-step="6" x1="240" y1="220" x2="265" y2="265" stroke="#e2e8f0" stroke-width="6" opacity="0"/>
-          <circle class="part" data-step="7" cx="230" cy="115" r="3.5" fill="#e2e8f0" opacity="0"/>
-          <circle class="part" data-step="7" cx="250" cy="115" r="3.5" fill="#e2e8f0" opacity="0"/>
-          <path class="part" data-step="8" d="M240 118 L238 128 L242 128 Z" fill="#e2e8f0" opacity="0"/>
-          <path class="part" data-step="9" d="M230 135 Q240 142 250 135" fill="none" stroke="#e2e8f0" stroke-width="4" opacity="0"/>
-          <path class="part" data-step="10" d="M214 102 Q240 90 266 102" fill="none" stroke="#e2e8f0" stroke-width="6" stroke-linecap="round" opacity="0"/>
-        </svg>
+  <div class="app">
+    <!-- LEFT: HANGMAN STAGE -->
+    <section class="card">
+      <div class="headline">
+        <h1>Vješala</h1>
+        <small>Pokušaji: <b id="triesLeft">10</b></small>
       </div>
-    </div>
-  </section>
+      <div class="content stage">
+        <div class="meters">
+          <div>Neispravna slova: <b id="badCount">0</b></div>
+          <div>Preostalo dijelova: <b id="partsLeft">10</b></div>
+        </div>
+        <div class="svg-wrap">
+          <svg viewBox="0 0 400 400" aria-label="Vješala">
+            <line x1="40" y1="360" x2="200" y2="360" stroke="#8b9db2" stroke-width="8"/>
+            <line x1="80" y1="360" x2="80" y2="40" stroke="#8b9db2" stroke-width="8"/>
+            <line x1="80" y1="40" x2="240" y2="40" stroke="#8b9db2" stroke-width="8"/>
+            <line x1="240" y1="40" x2="240" y2="90" stroke="#8b9db2" stroke-width="6"/>
+            <circle class="part" data-step="1" cx="240" cy="120" r="28" fill="none" stroke="#e2e8f0" stroke-width="6" opacity="0"/>
+            <line class="part" data-step="2" x1="240" y1="148" x2="240" y2="220" stroke="#e2e8f0" stroke-width="6" opacity="0"/>
+            <line class="part" data-step="3" x1="240" y1="168" x2="210" y2="200" stroke="#e2e8f0" stroke-width="6" opacity="0"/>
+            <line class="part" data-step="4" x1="240" y1="168" x2="270" y2="200" stroke="#e2e8f0" stroke-width="6" opacity="0"/>
+            <line class="part" data-step="5" x1="240" y1="220" x2="215" y2="265" stroke="#e2e8f0" stroke-width="6" opacity="0"/>
+            <line class="part" data-step="6" x1="240" y1="220" x2="265" y2="265" stroke="#e2e8f0" stroke-width="6" opacity="0"/>
+            <circle class="part" data-step="7" cx="230" cy="115" r="3.5" fill="#e2e8f0" opacity="0"/>
+            <circle class="part" data-step="7" cx="250" cy="115" r="3.5" fill="#e2e8f0" opacity="0"/>
+            <path class="part" data-step="8" d="M240 118 L238 128 L242 128 Z" fill="#e2e8f0" opacity="0"/>
+            <path class="part" data-step="9" d="M230 135 Q240 142 250 135" fill="none" stroke="#e2e8f0" stroke-width="4" opacity="0"/>
+            <path class="part" data-step="10" d="M214 102 Q240 90 266 102" fill="none" stroke="#e2e8f0" stroke-width="6" stroke-linecap="round" opacity="0"/>
+          </svg>
+        </div>
+      </div>
+    </section>
 
-  <section class="card">
-    <div class="headline"><h1 style="margin:0">Igra</h1><small id="statusSmall">Unesite riječ i započnite</small></div>
-    <div class="content">
-      <div class="word" id="wordSlots" aria-live="polite"></div>
-      <div class="keyboard" id="keyboard" aria-label="Tipkovnica za slova"></div>
-      <div class="actions">
-        <input id="guessInput" class="input" type="text" placeholder="Pogodi cijelu riječ…"/>
-        <button id="guessBtn" class="btn">Provjeri riječ</button>
-        <button id="resetBtn" class="btn">Nova igra</button>
-        <button id="changeBtn" class="btn">Promijeni riječ</button>
+    <!-- RIGHT: GAME -->
+    <section class="card">
+      <div class="headline">
+        <h1>Igra</h1>
+        <small id="statusSmall">Unesite riječ i započnite</small>
       </div>
-      <div id="message" class="message" style="display:none"></div>
-      <div style="opacity:.8;font-size:13px">Napomena: dopuštena su hrvatska slova (Č Ć Đ Š Ž). Razmaci se ne boduju kao greške.</div>
-    </div>
-  </section>
-</div>
+      <div class="content">
+        <div class="word" id="wordSlots" aria-live="polite"></div>
+
+        <div class="keyboard" id="keyboard" aria-label="Tipkovnica za slova"></div>
+
+        <div class="actions">
+          <input id="guessInput" class="input" type="text" placeholder="Pogodi cijelu riječ…" />
+          <button id="guessBtn" class="btn">Provjeri riječ</button>
+          <button id="resetBtn" class="btn secondary">Nova igra</button>
+          <button id="changeBtn" class="btn secondary">Promijeni riječ</button>
+        </div>
+
+        <div id="message" class="message" style="display:none"></div>
+        <div class="note">Napomena: dopuštena su hrvatska slova i dvoslovi (Č Ć Đ Š Ž, NJ, LJ, DŽ). Razmaci se ne boduju kao greške.</div>
+      </div>
+    </section>
+  </div>
 
 <script>
 (function(){
-  const HR_LETTERS = ["A","B","C","Č","Ć","D","Đ","E","F","G","H","I","J","K","L","M","N","O","P","R","S","Š","T","U","V","Z","Ž"];
+  // ----- Hrvatska abeceda + dvoslovi kao JEDAN znak
+  const HR_TOKENS = ["A","B","C","Č","Ć","D","DŽ","Đ","E","F","G","H","I","J","K","L","LJ","M","N","NJ","O","P","R","S","Š","T","U","V","Z","Ž"];
+  const DIGRAPHS = ["DŽ","LJ","NJ"]; // moramo spajati u tokenizaciji
   const MAX_STEPS = 10;
+
   const parts = Array.from(document.querySelectorAll('.part'));
   const els = {
     setupModal: document.getElementById('setupModal'),
@@ -125,19 +196,46 @@ svg{max-width:500px;width:100%;height:auto}
     message: document.getElementById('message'),
   };
 
-  const DEMO_WORDS = ["ELEKTROMOTOR","TRANSFORMATOR","ŽIRAFA","ČEKIĆ","NJIVA","STRUJNI KRUG","POGON","MJERENJE","KONČAR","HIDROAGREGAT","ZAŠTITA RELE","MAGNETNI TOK","KABELSKI SNOP","ZAVOJNICA","ŽIČANA MREŽA","KLIZNI PRSTEN"];
+  const DEMO_WORDS = [
+    "NJIVA", "LJEPOTA", "DŽEPNI NOŽ", "ELEKTROMOTOR", "TRANSFORMATOR", "ŽIRAFA",
+    "ČEKIĆ", "STRUJNI KRUG", "KONČAR", "HIDROAGREGAT", "ZAŠTITA RELE", "MAGNETNI TOK",
+    "KABELSKI SNOP", "ZAVOJNICA", "ŽIČANA MREŽA", "KLIZNI PRSTEN"
+  ];
 
-  let state = { secret:"", revealed:[], guessed:new Set(), badGuesses:0, finished:false, won:false };
+  let state = {
+    tokens: [],          // npr. ["NJ","I","V","A"]
+    revealed: [],        // bool po tokenu
+    guessed: new Set(),  // skup pogađanih tokena (A,B,Č, DŽ, LJ, ...)
+    badGuesses: 0,
+    finished: false,
+    won: false
+  };
 
-  const normalize = s => s.normalize("NFC").replace(/\s+$/,'');
+  // ----- Pomoćne
+  const normalize = s => (s||"").normalize("NFC").replace(/\s+$/,'');
   const onlyLettersSpaces = s => s.replace(/[^A-Za-zČĆĐŠŽčćđšž\s]/g,'');
-  const isLetter = ch => HR_LETTERS.includes(ch.toUpperCase());
+  const upperHR = s => s.toUpperCase();
+
+  // Tokeniziraj string u slova/dvoslove (A..Ž + DŽ/LJ/NJ), razmaci ostaju " "
+  function tokenize(hrString){
+    const s = upperHR(hrString);
+    const out = [];
+    for(let i=0;i<s.length;i++){
+      const two = s.slice(i,i+2);
+      const three = s.slice(i,i+2) === "DŽ" ? "DŽ" : null; // već obuhvaćeno s two
+      if (s[i] === " "){ out.push(" "); continue; }
+      if (two === "NJ" || two === "LJ" || two === "DŽ"){
+        out.push(two); i++; continue;
+      }
+      out.push(s[i]);
+    }
+    return out;
+  }
 
   function setMessage(text, type){
     if(!text){ els.message.style.display='none'; return; }
     els.message.textContent = text;
-    els.message.classList.remove('good','bad');
-    if(type) els.message.classList.add(type);
+    els.message.className = 'message' + (type ? ' ' + (type==='good'?'good':'bad') : '');
     els.message.style.display='block';
   }
 
@@ -150,37 +248,45 @@ svg{max-width:500px;width:100%;height:auto}
 
   function buildKeyboard(){
     els.keyboard.innerHTML = "";
-    HR_LETTERS.forEach(L=>{
+    HR_TOKENS.forEach(T=>{
       const btn = document.createElement('button');
-      btn.className = 'key'; btn.type='button'; btn.textContent = L;
-      btn.setAttribute('aria-label','Slovo '+L);
-      btn.addEventListener('click', ()=>handleLetter(L));
+      btn.className = 'key';
+      btn.type='button';
+      btn.textContent = T;
+      btn.setAttribute('aria-label', 'Slovo ' + T);
+      btn.addEventListener('click', ()=>handleToken(T));
       els.keyboard.appendChild(btn);
     });
   }
 
-  function disableKeyboard(disabled=true){ els.keyboard.querySelectorAll('.key').forEach(b=>b.disabled = disabled); }
+  function disableKeyboard(disabled=true){
+    els.keyboard.querySelectorAll('.key').forEach(b=>b.disabled = disabled);
+  }
 
   function renderWordSlots(){
     els.wordSlots.innerHTML = "";
-    const chars = [...state.secret];
-    state.revealed = chars.map(ch => ch === ' ' ? true : false);
-    chars.forEach((ch, idx)=>{
+    state.revealed = state.tokens.map(t => t === ' ' ? true : false);
+
+    state.tokens.forEach((tok, idx)=>{
       const div = document.createElement('div');
-      div.className = 'slot' + (ch === ' ' ? ' space' : '');
+      div.className = 'slot' + (tok === ' ' ? ' space' : '');
       div.setAttribute('data-idx', idx);
-      div.textContent = ch === ' ' ? ' ' : '–';
+      div.textContent = tok === ' ' ? ' ' : '–'; // JEDNA crtica i za NJ/LJ/DŽ
       els.wordSlots.appendChild(div);
     });
   }
 
-  function revealLetter(letter){
+  function revealToken(token){
     let found = false;
-    [...state.secret].forEach((ch, i)=>{
-      if(ch === letter){
+    state.tokens.forEach((tok, i)=>{
+      if(tok === token){
         state.revealed[i] = true;
         const slot = els.wordSlots.querySelector(`.slot[data-idx="${i}"]`);
-        if(slot) slot.textContent = ch;
+        if(slot){
+          slot.textContent = tok; // prikaži "NJ"/"LJ"/"DŽ" ili slovo
+          slot.classList.add('revealed','goodflash');
+          setTimeout(()=> slot.classList.remove('goodflash'), 600);
+        }
         found = true;
       }
     });
@@ -190,7 +296,7 @@ svg{max-width:500px;width:100%;height:auto}
   function checkWin(){
     if(state.revealed.every(Boolean)){
       state.finished = true; state.won = true;
-      setMessage("Bravo! Pogodili ste riječ: " + state.secret, 'good');
+      setMessage("Bravo! Pogodili ste riječ.", 'good');
       els.statusSmall.textContent = "Pobjeda!";
       disableKeyboard(true);
     }
@@ -198,32 +304,48 @@ svg{max-width:500px;width:100%;height:auto}
 
   function stepHangman(){
     const next = state.badGuesses;
-    parts.filter(p=> Number(p.getAttribute('data-step')) === next).forEach(p=> p.style.opacity = 1);
+    document.querySelectorAll('.part').forEach(p=>{
+      const step = Number(p.getAttribute('data-step'));
+      if(step === next) p.style.opacity = 1;
+    });
   }
 
-  function resetHangman(){ parts.forEach(p=> p.style.opacity = 0); }
+  function resetHangman(){ document.querySelectorAll('.part').forEach(p=> p.style.opacity = 0); }
 
-  function handleLetter(letter){
+  function handleToken(token){
     if(state.finished) return;
-    const L = letter.toUpperCase();
-    if(state.guessed.has(L)) return;
-    const btn = Array.from(els.keyboard.querySelectorAll('.key')).find(b => b.textContent === L);
-    state.guessed.add(L);
-    if([...state.secret].includes(L)){
+    const T = token; // već je gumb u ispravnom obliku
+    if(state.guessed.has(T)) return;
+
+    const btn = Array.from(els.keyboard.querySelectorAll('.key')).find(b => b.textContent === T);
+
+    state.guessed.add(T);
+    if(state.tokens.includes(T)){
       if(btn){ btn.classList.add('good'); btn.disabled = true; }
-      revealLetter(L); setMessage(`✅ Slovo ${L} JE u riječi.`, 'good'); checkWin();
+      revealToken(T);
+      setMessage(`✅ Slovo ${T} JE u riječi.`, 'good');
+      checkWin();
     }else{
       if(btn){ btn.classList.add('bad'); btn.disabled = true; }
-      state.badGuesses++; stepHangman(); updateCounters(); setMessage(`❌ Slovo ${L} NIJE u riječi.`, 'bad');
+      state.badGuesses++;
+      stepHangman();
+      updateCounters();
+      // kratki crveni flash
+      els.wordSlots.querySelectorAll('.slot:not(.space)').forEach(s=>{
+        s.classList.add('badflash');
+        setTimeout(()=> s.classList.remove('badflash'), 300);
+      });
+      setMessage(`❌ Slovo ${T} NIJE u riječi.`, 'bad');
       if(state.badGuesses >= MAX_STEPS){
         state.finished = true; state.won = false;
-        [...state.secret].forEach((ch,i)=>{
+        // otkrij sve
+        state.tokens.forEach((tok,i)=>{
           const slot = els.wordSlots.querySelector(`.slot[data-idx="${i}"]`);
-          if(slot && slot.textContent === '–') slot.textContent = ch;
+          if(slot && slot.textContent === '–'){ slot.textContent = tok; slot.classList.add('revealed'); }
         });
         disableKeyboard(true);
         els.statusSmall.textContent = "Obješen! Igrač koji je birao riječ pobjeđuje.";
-        setMessage("☠️ Gotovo! Obješeni ste. Riječ je bila: " + state.secret, 'bad');
+        setMessage("☠️ Gotovo! Obješeni ste.", 'bad');
       }
     }
   }
@@ -232,65 +354,110 @@ svg{max-width:500px;width:100%;height:auto}
     if(state.finished) return;
     const raw = normalize(els.guessInput.value || "");
     if(!raw){ setMessage("Upiši riječ koju želiš pogoditi.", 'bad'); return; }
-    const proposal = onlyLettersSpaces(raw).toUpperCase().replace(/\s+/g,' ').trim();
-    const target = state.secret.toUpperCase();
+    const proposal = upperHR(onlyLettersSpaces(raw)).replace(/\s+/g,' ').trim();
+    const target = state.tokens.join('');
     if(!proposal){ setMessage("Samo slova i razmaci su dopušteni.", 'bad'); return; }
-    if(proposal === target){
+
+    if(upperHR(proposal) === target){
       state.revealed = state.revealed.map(()=>true);
-      [...state.secret].forEach((ch,i)=>{
+      state.tokens.forEach((tok,i)=>{
         const slot = els.wordSlots.querySelector(`.slot[data-idx="${i}"]`);
-        if(slot) slot.textContent = ch;
+        if(slot) slot.textContent = tok;
       });
-      state.finished = true; state.won = true; disableKeyboard(true);
-      els.statusSmall.textContent = "Točno! Pogodili ste cijelu riječ."; setMessage("🎉 Točno! Riječ je: " + state.secret, 'good');
+      state.finished = true; state.won = true;
+      disableKeyboard(true);
+      els.statusSmall.textContent = "Točno! Pogodili ste cijelu riječ.";
+      setMessage("🎉 Točno!", 'good');
     }else{
       setMessage("Nije točno. Pokušaj dalje sa slovima ili ponovno pogodi cijelu riječ.", 'bad');
     }
-    els.guessInput.value = ""; els.guessInput.focus();
+    els.guessInput.value = "";
+    els.guessInput.focus();
   }
 
-  function startWithSecret(secret){
-    state = { secret, revealed:[], guessed:new Set(), badGuesses:0, finished:false, won:false };
-    resetHangman(); updateCounters(); buildKeyboard(); disableKeyboard(false); renderWordSlots();
-    setMessage(""); els.statusSmall.textContent = "Igra je u tijeku. Pogađaj slova ili cijelu riječ."; els.guessInput.value = ""; els.guessInput.focus();
+  function startWithSecret(secretText){
+    state = {
+      tokens: tokenize(secretText),
+      revealed: [],
+      guessed: new Set(),
+      badGuesses: 0,
+      finished: false,
+      won: false
+    };
+    resetHangman();
+    updateCounters();
+    buildKeyboard();
+    disableKeyboard(false);
+    renderWordSlots();
+    setMessage("");
+    els.statusSmall.textContent = "Igra je u tijeku. Pogađaj slova ili cijelu riječ.";
+    els.guessInput.value = "";
+    els.guessInput.focus();
   }
 
-  function openSetup(){ els.setupModal.style.display = 'grid'; els.secretInput.value = ""; els.secretInput.type = 'password'; els.toggleShow.setAttribute('aria-pressed','false'); }
+  function openSetup(){
+    els.setupModal.style.display = 'grid';
+    els.secretInput.value = "";
+    els.secretInput.type = 'password';
+    els.toggleShow.setAttribute('aria-pressed','false');
+  }
   function closeSetup(){ els.setupModal.style.display = 'none'; }
 
+  // UI events
   els.toggleShow.addEventListener('click', ()=>{
     const showing = els.secretInput.type === 'text';
     els.secretInput.type = showing ? 'password' : 'text';
     els.toggleShow.textContent = showing ? 'Pokaži' : 'Sakrij';
-    els.toggleShow.setAttribute('aria-pressed', String(!showing)); els.secretInput.focus();
+    els.toggleShow.setAttribute('aria-pressed', String(!showing));
+    els.secretInput.focus();
   });
 
   els.startGame.addEventListener('click', ()=>{
-    let raw = normalize(els.secretInput.value || ""); raw = onlyLettersSpaces(raw).replace(/\s+/g,' ').trim();
-    if(!raw || raw.length < 2){ setMessage("Unesi riječ (minimalno 2 znaka).", 'bad'); return; }
-    const sec = raw.toUpperCase(); closeSetup(); startWithSecret(sec);
+    let raw = normalize(els.secretInput.value || "");
+    raw = onlyLettersSpaces(raw).replace(/\s+/g,' ').trim();
+    if(!raw || raw.length < 2){
+      setMessage("Unesi riječ (minimalno 2 znaka).", 'bad');
+      return;
+    }
+    closeSetup();
+    startWithSecret(raw);
   });
 
-  els.demoWord.addEventListener('click', ()=>{ const sec = DEMO_WORDS[Math.floor(Math.random()*DEMO_WORDS.length)]; els.secretInput.value = sec; });
+  els.demoWord.addEventListener('click', ()=>{
+    const sec = DEMO_WORDS[Math.floor(Math.random()*DEMO_WORDS.length)];
+    els.secretInput.value = sec;
+  });
+
   els.guessBtn.addEventListener('click', guessWhole);
   els.guessInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') guessWhole(); });
-  els.resetBtn.addEventListener('click', ()=>{ if(!state.secret){ openSetup(); return; } startWithSecret(state.secret); });
+
+  els.resetBtn.addEventListener('click', ()=>{
+    if(state.tokens.length===0){ openSetup(); return; }
+    startWithSecret(state.tokens.join(''));
+  });
+
   els.changeBtn.addEventListener('click', ()=>{ openSetup(); });
 
+  // fizička tipkovnica (ako netko igra na laptopu)
   window.addEventListener('keydown', (e)=>{
     if(els.setupModal.style.display !== 'none') return;
     if(state.finished) return;
     const key = e.key.toUpperCase();
-    if(isLetter(key)){ e.preventDefault(); handleLetter(key); }
+
+    // pokušaj mapirati dvoslove: kad korisnik brzo utipka N pa J, skupi ih
+    // (ovo je minimalno rješenje – tapkanje na ekranu ionako ide preko gumba)
+    if(key==="N"){ window.__lastN = Date.now(); return; }
+    if(key==="J" && window.__lastN && Date.now() - window.__lastN < 300){ handleToken("NJ"); window.__lastN = 0; return; }
+    if(key==="L"){ window.__lastL = Date.now(); return; }
+    if(key==="J" && window.__lastL && Date.now() - window.__lastL < 300){ handleToken("LJ"); window.__lastL = 0; return; }
+    if(key==="D"){ window.__lastD = Date.now(); return; }
+    if(key==="Ž" && window.__lastD && Date.now() - window.__lastD < 400){ handleToken("DŽ"); window.__lastD = 0; return; }
+
+    if(HR_TOKENS.includes(key)){ handleToken(key); }
   });
 
+  // inicijalno
   openSetup();
-
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('service-worker.js').catch(console.error);
-    });
-  }
 })();
 </script>
 </body>
