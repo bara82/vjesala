@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Vješala</title>
+<meta name="description" content="Igra vješala na hrvatskom — radi i bez interneta.">
+<meta name="theme-color" content="#fdf6e3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1b2233" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Vješala">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ===== POČETNI EKRAN ===== -->
+<main id="home" class="screen">
+  <header class="home-head">
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 120 120"><use href="#mini-gallows"/></svg>
+    </div>
+    <h1>Vješala</h1>
+    <p class="tag">Pogodi riječ prije nego što se nacrta čovječuljak!</p>
+  </header>
+
+  <section class="panel">
+    <h2 class="label">Kategorija</h2>
+    <div class="chips" id="catChips" role="radiogroup" aria-label="Kategorija"></div>
+
+    <h2 class="label">Težina</h2>
+    <div class="seg" id="diffSeg" role="radiogroup" aria-label="Težina">
+      <button type="button" data-diff="lako" role="radio">🙂 Lako<small>kratke riječi · 10 života</small></button>
+      <button type="button" data-diff="srednje" role="radio">😎 Srednje<small>8 života</small></button>
+      <button type="button" data-diff="tesko" role="radio">🔥 Teško<small>duge riječi · 6 života</small></button>
+    </div>
+
+    <button type="button" class="btn big primary" id="playBtn">▶ Igraj</button>
+    <button type="button" class="btn big" id="duoBtn">👥 Igra za dvoje <small>jedan zada riječ, drugi pogađa</small></button>
+  </section>
+
+  <section class="stats" id="stats" aria-label="Statistika"></section>
+  <p class="offline-note" id="offlineNote">✈️ Radi i u zrakoplovnom načinu rada.</p>
+</main>
+
+<!-- ===== IGRA ===== -->
+<main id="game" class="screen" hidden>
+  <header class="game-head">
+    <button type="button" class="icon-btn" id="homeBtn" aria-label="Početni ekran">←</button>
+    <div class="cat-pill" id="catPill"></div>
+    <div class="lives" id="lives" aria-live="polite"></div>
+  </header>
+
+  <div class="stage">
+    <svg id="hangman" viewBox="0 0 300 260" role="img" aria-label="Vješala">
+      <g class="gallows">
+        <path d="M20 245 Q150 228 280 245" class="ground"/>
+        <line x1="70" y1="242" x2="70" y2="22"/>
+        <line x1="62" y1="22" x2="200" y2="22"/>
+        <line x1="70" y1="62" x2="110" y2="22" class="brace"/>
+        <line x1="190" y1="22" x2="190" y2="52" class="rope"/>
+      </g>
+      <g class="man">
+        <circle class="part" data-step="1" cx="190" cy="78" r="26"/>
+        <line class="part" data-step="2" x1="190" y1="104" x2="190" y2="170"/>
+        <line class="part" data-step="3" x1="190" y1="120" x2="160" y2="150"/>
+        <line class="part" data-step="4" x1="190" y1="120" x2="220" y2="150"/>
+        <line class="part" data-step="5" x1="190" y1="170" x2="165" y2="212"/>
+        <line class="part" data-step="6" x1="190" y1="170" x2="215" y2="212"/>
+        <g class="part face" data-step="7"><circle cx="180" cy="73" r="3.5"/><circle cx="200" cy="73" r="3.5"/></g>
+        <path class="part face" data-step="8" d="M190 77 L187 86 L193 86 Z"/>
+        <path class="part mouth" data-step="9" d="M178 92 Q190 86 202 92"/>
+        <path class="part hair" data-step="10" d="M166 64 Q174 46 190 50 Q206 46 214 64"/>
+      </g>
+    </svg>
+  </div>
+
+  <div class="word" id="word" aria-live="polite"></div>
+  <p class="feedback" id="feedback" aria-live="polite">&nbsp;</p>
+
+  <div class="tools">
+    <button type="button" class="btn small" id="hintBtn">💡 Pomoć <small>−1 život</small></button>
+    <button type="button" class="btn small" id="solveBtn">✍️ Pogodi riječ</button>
+  </div>
+
+  <div class="keyboard" id="keyboard" aria-label="Slova"></div>
+</main>
+
+<!-- ===== IGRA ZA DVOJE: unos riječi ===== -->
+<dialog id="duoDlg" class="sheet">
+  <form method="dialog" id="duoForm">
+    <h2>Zadaj tajnu riječ</h2>
+    <p class="muted">Neka drugi igrač ne gleda! 🙈</p>
+    <div class="field">
+      <input id="secretInput" type="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" maxlength="30" placeholder="npr. SLADOLED">
+      <button type="button" class="icon-btn" id="peekBtn" aria-label="Pokaži riječ">👁</button>
+    </div>
+    <input id="clueInput" type="text" autocomplete="off" maxlength="30" placeholder="Trag (nije obavezno), npr. Hrana">
+    <p class="error" id="duoError"></p>
+    <div class="row">
+      <button type="button" class="btn" id="duoCancel">Odustani</button>
+      <button type="submit" class="btn primary" id="duoStart">Kreni</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- ===== POGAĐANJE CIJELE RIJEČI ===== -->
+<dialog id="solveDlg" class="sheet">
+  <form method="dialog" id="solveForm">
+    <h2>Znaš riječ?</h2>
+    <p class="muted">Ako pogriješiš, gubiš 2 života.</p>
+    <input id="solveInput" type="text" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" maxlength="30" placeholder="Upiši cijelu riječ">
+    <p class="error" id="solveError"></p>
+    <div class="row">
+      <button type="button" class="btn" id="solveCancel">Odustani</button>
+      <button type="submit" class="btn primary">Provjeri</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- ===== KRAJ IGRE ===== -->
+<dialog id="endDlg" class="sheet end">
+  <div class="end-emoji" id="endEmoji"></div>
+  <h2 id="endTitle"></h2>
+  <p class="end-word" id="endWord"></p>
+  <p class="muted" id="endText"></p>
+  <div class="row">
+    <button type="button" class="btn" id="endHome">Izbornik</button>
+    <button type="button" class="btn primary" id="endNext">Nova riječ</button>
+  </div>
+</dialog>
+
+<div class="confetti" id="confetti" aria-hidden="true"></div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="mini-gallows" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="22" y1="104" x2="98" y2="104" stroke="var(--wood)" stroke-width="8"/>
+      <line x1="38" y1="104" x2="38" y2="16" stroke="var(--wood)" stroke-width="8"/>
+      <line x1="34" y1="16" x2="86" y2="16" stroke="var(--wood)" stroke-width="8"/>
+      <line x1="82" y1="16" x2="82" y2="30" stroke="var(--rope)" stroke-width="4"/>
+      <circle cx="82" cy="44" r="13" stroke="var(--ink)" stroke-width="5"/>
+      <line x1="82" y1="57" x2="82" y2="82" stroke="var(--ink)" stroke-width="5"/>
+      <path d="M76 46 Q82 51 88 46" stroke="var(--ink)" stroke-width="3"/>
+    </g>
+  </defs>
+</svg>
+
+<script src="words.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
